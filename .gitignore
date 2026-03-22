@@ -1,0 +1,10 @@
+.pytest_cache/
+__pycache__/
+*.pyc
+.claude-test/
+.claude-test-hybrid/
+.installed-skill/
+runs/
+runs-*/
+demo-runs/
+demo-runs-*/

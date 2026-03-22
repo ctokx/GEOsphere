@@ -1,0 +1,41 @@
+Metadata-Version: 2.4
+Name: geosphere-audit
+Version: 0.1.0
+Summary: Independent GEO auditing engine with deterministic collection, scoring, and reporting
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0
+Requires-Dist: lxml<7.0.0,>=5.0.0
+Requires-Dist: requests<3.0.0,>=2.32.0
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.0.0; extra == "dev"
+
+# GEOsphere
+
+GEOsphere is a standalone GEO audit engine built from scratch for deterministic collection, scoring, and reporting.
+
+## Quick start
+
+```bash
+cd GEOsphere
+python -m pip install -e .[dev]
+python -m geosphere audit https://example.com
+python -m geosphere quick https://example.com
+pytest
+```
+
+## Commands
+
+```bash
+python -m geosphere audit <url> --max-pages 12 --output runs
+python -m geosphere quick <url>
+python -m geosphere inspect <url>
+python -m geosphere llms <url>
+python -m geosphere compare <run-a> <run-b>
+python -m geosphere benchmark <primary-url> <competitor-url> [more]
+python -m geosphere install-skill
+```
+
+## Output
+
+Each audit creates a run directory containing `audit.json`, `audit.md`, `summary.json`, `robots.json`, `sitemap.json`, `pages.json`, `llms.txt`, `llms-full.txt`, and collected artifacts.

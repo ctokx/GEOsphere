@@ -44,6 +44,27 @@ Run from:
 
 For `audit`, the Python runtime is an evidence collector, not the final judge. Claude specialists own the real scoring, severity calls, and final action plan.
 
+## Startup banner
+
+When `/geosphere audit ...` starts, begin with a short GEOsphere banner before the first execution step.
+
+Use this exact block:
+
+```text
+   ______ ______  ____                          __
+  / ____// ____/ / __ \ ______ ____   _____   / /_   ___   _____ ___
+ / / __ / __/   / / / // ___// __ \ / ___/  / __ \ / _ \ / ___// _ \
+/ /_/ // /___  / /_/ /(__  )/ /_/ // /     / / / //  __// /   /  __/
+\____//_____/  \____//____// .___//_/     /_/ /_/ \___//_/    \___/
+                          /_/
+```
+
+Immediately below it, add one short line:
+
+`GEOsphere audit starting. Collecting evidence and launching specialist review.`
+
+If terminal coloring is available, prefer an orange tint. If not, keep it plain text.
+
 ## Behavior
 
 ### `quick`

@@ -1,13 +1,43 @@
 # GEOsphere
 
-GEOsphere is a Claude Code skill and Python runtime for GEO audits.
-
 ![GEOsphere](./geo.png)
 
-It has two modes:
+GEOsphere is a Claude Code skill and Python runtime for GEO audits.
+
+It supports two paths:
 
 - `quick`: local deterministic audit
-- `audit`: Claude-led review using collected artifacts and specialist agents
+- `audit`: Claude-led audit with specialist review and live verification
+
+## What it does
+
+GEOsphere can:
+
+- collect site artifacts from homepage, sitemap, robots.txt, and sampled pages
+- analyze technical, content, schema, entity, and platform issues
+- inspect `llms.txt` and generate draft `llms.txt` outputs
+- compare runs and benchmark sites
+- save manager-facing markdown reports
+- generate PDF reports from a structured manager brief
+
+## Main workflow
+
+### `quick`
+
+Use `quick` for a fast local pass.
+
+### `audit`
+
+Use `audit` for the full Claude Code workflow:
+
+1. GEOsphere collects artifacts into a run directory.
+2. Claude reviews the collected evidence.
+3. Specialists verify technical, content, schema, and entity issues.
+4. Claude returns the final audit.
+5. Claude can save:
+   - `manager-report.md`
+   - `manager-brief.json`
+   - PDF output
 
 ## Requirements
 
@@ -81,14 +111,6 @@ Then restart Claude Code and use:
 /geosphere quick https://example.com
 ```
 
-Expected audit flow:
-
-1. GEOsphere collects artifacts into a run directory.
-2. Claude reviews the artifacts and performs live verification.
-3. Specialists analyze technical, content, schema, and entity issues.
-4. Claude returns the final audit.
-5. Claude can save `manager-report.md` and optionally generate a PDF.
-
 ## Run directory
 
 Collection runs write files such as:
@@ -103,7 +125,7 @@ Collection runs write files such as:
 - `llms.txt`
 - `llms-full.txt`
 
-If you save the final Claude output, the run directory can also contain:
+Saved final audit outputs can also include:
 
 - `manager-report.md`
 - `manager-brief.json`
@@ -121,4 +143,13 @@ python -m geosphere report-pdf <run-dir-or-json>
 python -m geosphere compare <left-run> <right-run>
 python -m geosphere benchmark <primary-url> <competitor-url> [more]
 python -m geosphere install-skill
+```
+
+## Project layout
+
+```text
+src/geosphere/           Python runtime
+geosphere/               Claude Code skill and specialist playbooks
+tests/                   test suite
+examples/                small example inputs
 ```

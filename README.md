@@ -2,6 +2,8 @@
 
 GEOsphere is a Claude Code skill and Python runtime for GEO audits.
 
+![GEOsphere](./geo.png)
+
 It has two modes:
 
 - `quick`: local deterministic audit

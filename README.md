@@ -153,3 +153,35 @@ geosphere/               Claude Code skill and specialist playbooks
 tests/                   test suite
 examples/                small example inputs
 ```
+
+## Sample run structure
+
+A completed audit run directory looks like this:
+
+```text
+runs/
+└── 20260101T120000Z-example-com/
+    ├── collection.json          # collection outcome
+    ├── collection.md            # collection markdown
+    ├── profile.json             # site profile
+    ├── pages.json               # per-page snapshots
+    ├── robots.json              # robots.txt data
+    ├── sitemap.json             # sitemap data
+    ├── llms-status.json         # llms.txt check
+    ├── llms.txt                 # generated draft
+    ├── llms-full.txt            # detailed generated draft
+    ├── audit.json               # engine audit outcome (secondary)
+    ├── audit.md                 # engine audit markdown (secondary)
+    ├── manager-report.md        # final Claude synthesis (primary)
+    ├── manager-brief.json       # structured brief for PDF
+    ├── GEOsphere-Executive-Brief.pdf
+    └── artifacts/
+        ├── pages/               # raw HTML artifacts
+        └── meta/
+```
+
+The `manager-report.md` and `manager-brief.json` are the primary outputs from a Claude-led audit. The engine outputs (`audit.json`, `audit.md`) are secondary evidence.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

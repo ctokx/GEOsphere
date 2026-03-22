@@ -48,9 +48,10 @@ For `audit`, the Python runtime is an evidence collector, not the final judge. C
 
 When `/geosphere audit ...` starts, begin with a short GEOsphere banner before the first execution step.
 
-Use this exact block:
+Output this banner inside a fenced code block so the Claude Code UI renders it with fixed-width font and correct alignment:
 
-```text
+````text
+```
    ______ ______  ____                          __
   / ____// ____/ / __ \ ______ ____   _____   / /_   ___   _____ ___
  / / __ / __/   / / / // ___// __ \ / ___/  / __ \ / _ \ / ___// _ \
@@ -58,12 +59,11 @@ Use this exact block:
 \____//_____/  \____//____// .___//_/     /_/ /_/ \___//_/    \___/
                           /_/
 ```
+````
 
-Immediately below it, add one short line:
+Immediately below the code block, add one short line of plain text:
 
 `GEOsphere audit starting. Collecting evidence and launching specialist review.`
-
-If terminal coloring is available, prefer an orange tint. If not, keep it plain text.
 
 ## Behavior
 
@@ -98,7 +98,15 @@ This is the manager-grade mode and should feel materially deeper than `quick`.
    - `C:/Users/varol/.claude/skills/geosphere/agents/content-review.md`
    - `C:/Users/varol/.claude/skills/geosphere/agents/schema-review.md`
    - `C:/Users/varol/.claude/skills/geosphere/agents/entity-review.md`
-6. Launch the four specialists in parallel.
+6. Launch the four specialists in parallel. Each specialist MUST produce a visible block in the conversation before the synthesis begins, structured as:
+   ```
+   ### [Specialist Name] Review
+   - URLs fetched live: [list]
+   - Module score: [N]/100
+   - Confidence: [high/medium/low]
+   - Key findings: [2-4 bullets]
+   ```
+   These blocks confirm live work happened and provide the user visibility into specialist activity.
 7. Specialists may use both:
    - the saved artifacts
    - fresh live fetches against the site and relevant third-party pages when needed
@@ -133,36 +141,39 @@ This is the manager-grade mode and should feel materially deeper than `quick`.
    - whether the user wants the final synthesized audit saved as markdown
    - whether the user wants the PDF executive brief generated
 16. If the user wants the markdown saved:
-   - write the final synthesized audit to `manager-report.md` inside the run directory
+   - write the final synthesized audit to `manager-report.md` inside the run directory immediately
    - this markdown must reflect the final Claude synthesis, not the raw collection summary
+   - do not ask again for confirmation — execute the write as the next action after the user replies yes
 17. If the user wants the PDF:
-   - first write a `manager-brief.json` into the run directory
+   - write `manager-brief.json` into the run directory immediately — do not skip this step
    - that JSON must reflect the final synthesized audit, not the raw collection artifacts
-   - include:
-     - title
-     - brand_name
-     - site_url
-     - run_id
-     - audited_at
-     - overall_score
-     - confidence
-     - executive_summary
-     - opportunity_snapshot
-     - root_causes
-     - module_scores
-     - platform_readiness
-     - critical_issues
-     - template_defects
-     - page_weaknesses
-     - quick_wins
-     - plan_30_day
-     - verification_notes
-     - implementation_appendix
-     - final_remarks
+   - include all of these keys with the exact types shown:
+     - `title` — string
+     - `brand_name` — string
+     - `site_url` — string
+     - `run_id` — string
+     - `audited_at` — string (YYYY-MM-DD)
+     - `overall_score` — integer
+     - `confidence` — string
+     - `executive_summary` — string
+     - `opportunity_snapshot` — **object** with keys: `current_score`, `target_score_30d`, `ceiling_score`, `primary_win` (all strings)
+     - `root_causes` — array of strings
+     - `module_scores` — **array of objects**, each with: `name` (string), `score` (integer), `confidence` (string), `driver` (string, the primary driver sentence)
+     - `platform_readiness` — array of objects, each with: `platform` (string), `score` or `readiness` (string), `blocker` (string)
+     - `critical_issues` — array of objects, each with: `title`, `detail`, `scope`, `verification_status`, `fix_location`, `effort`, `expected_impact`
+     - `template_defects` — array of objects, each with: `defect`, `scope`, `fix`, `impact`
+     - `page_weaknesses` — array of objects, each with: `page`, `issue`, `priority`, `action`
+     - `quick_wins` — array of objects, each with: `action`, `owner`, `effort`, `why`, `upside`
+     - `plan_30_day` — array of objects, each with: `phase` (string label), `items` (array of strings)
+     - `verification_notes` — array of objects, each with: `claim`, `status`, `basis`
+     - `implementation_appendix` — **array of objects**, each with: `title` (string), `body` (string — plain text or pseudo-code, no nested JSON)
+     - `final_remarks` — string
+   - then immediately run: `python -m geosphere report-pdf <path-to-manager-brief.json>`
 18. If the user wants both:
    - save `manager-report.md` first
-   - save `manager-brief.json`
-   - then run `/geosphere report-pdf` against that `manager-brief.json`
+   - save `manager-brief.json` second
+   - then run the report-pdf command against that `manager-brief.json`
+   - do not ask for further confirmation between these steps — execute them sequentially as a single action block
 
 ### `report-pdf`
 
@@ -174,10 +185,29 @@ This is the manager-grade mode and should feel materially deeper than `quick`.
    `python -m geosphere report-pdf <path-to-manager-brief.json>`
 4. Return the PDF path and summarize what it contains.
 
+### `benchmark`
+
+1. Run `python -m geosphere collect <primary-url> --max-pages 50` for the primary site.
+2. Run `python -m geosphere collect <competitor-url> --max-pages 20` for each competitor.
+3. Read collection artifacts for all sites.
+4. Run parallel specialist review on the primary site (full depth).
+5. Run lighter specialist passes on competitors (technical + content minimum).
+6. Produce a side-by-side comparison table:
+
+   | Site | Overall | Technical | Content | Schema | Entity | Platforms |
+   |---|---|---|---|---|---|---|
+   | Primary | ... | ... | ... | ... | ... | ... |
+   | Competitor 1 | ... | ... | ... | ... | ... | ... |
+
+7. Highlight where the primary site leads, where it trails, and the highest-leverage gaps.
+8. Offer to save `benchmark-report.md` in the primary run directory.
+9. Offer to generate a PDF with the benchmark section included.
+
 ## Constraints
 
 - Do not anchor the final answer on a deterministic engine score.
-- If you mention any base engine output, label it explicitly as secondary.
+- If you mention any base engine output, label it explicitly as `Engine baseline (secondary):`.
+- Never present the `audit.json` total_score as the GEO score — that is a deterministic heuristic. The calibrated specialist score is the GEO score.
 - Prefer live specialist judgment over artifact heuristics when there is conflict and the live evidence is stronger.
 - Do not invent evidence.
 - Keep the final audit practical for a website manager, not just technically correct.

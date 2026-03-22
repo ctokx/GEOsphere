@@ -51,6 +51,7 @@ Return:
 - `confidence`
 - `root_causes`
 - `live_checks_performed`
+- `fetched_urls` (list of every URL actually fetched during this review)
 - `strong_pages`
 - `weak_pages`
 - `template_level_content_gaps`

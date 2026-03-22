@@ -51,6 +51,7 @@ Return:
 - `confidence`
 - `root_causes`
 - `live_checks_performed`
+- `fetched_urls` (list of every URL actually fetched or checked during this review)
 - `current_authority_state`
 - `missing_authority_signals`
 - `disambiguation_risks`

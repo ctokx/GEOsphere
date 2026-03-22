@@ -46,6 +46,7 @@ Return:
 - `confidence`
 - `root_causes`
 - `live_checks_performed`
+- `fetched_urls` (list of every URL actually fetched during this review)
 - `critical_schema_issues`
 - `template_level_schema_bugs`
 - `page_specific_schema_issues`

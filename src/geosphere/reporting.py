@@ -12,6 +12,7 @@ def render_markdown(outcome: AuditOutcome) -> str:
     lines.append(f"- Domain: {outcome.domain}")
     lines.append(f"- Business model: {outcome.business_model}")
     lines.append(f"- Overall score: {outcome.total_score}/100")
+    lines.append("- Score note: Engine baseline — see manager-report.md for the calibrated Claude-led score if a full audit was run")
     lines.append(f"- Pages analyzed: {outcome.pages_analyzed}")
     lines.append("")
     collection_health = outcome.summary.get("collection_health", {})
@@ -188,6 +189,31 @@ def render_markdown(outcome: AuditOutcome) -> str:
     for key in ("llms_txt", "llms_full_txt"):
         status = llms_status.get(key, {})
         lines.append(f"- `{status.get('url', '')}`: {'present' if status.get('exists') else 'missing'}")
+    lines.append("")
+    lines.append("## Run Metadata")
+    lines.append("")
+    lines.append(f"- Run ID: `{outcome.run_id}`")
+    lines.append(f"- Domain: {outcome.domain}")
+    lines.append(f"- Business model: {outcome.business_model}")
+    lines.append(f"- Pages analyzed: {outcome.pages_analyzed}")
+    lines.append("")
+    lines.append("## Score Methodology")
+    lines.append("")
+    lines.append("The overall score is a weighted average of five module scores:")
+    lines.append("")
+    lines.append("| Module | Weight | Description |")
+    lines.append("|---|---:|---|")
+    for module in outcome.modules:
+        desc = {
+            "technical": "Crawlability, indexability, metadata, rendering",
+            "content": "Citation readiness, E-E-A-T, freshness, depth",
+            "schema": "Structured data completeness and validity",
+            "entity": "External authority, disambiguation, sameAs graph",
+            "platforms": "Platform-specific readiness across AI engines",
+        }.get(module.name, module.summary)
+        lines.append(f"| {module.name.title()} | {module.weight:.0%} | {desc} |")
+    lines.append("")
+    lines.append("For the full calibrated audit with specialist verification, run `/geosphere audit` in Claude Code.")
     lines.append("")
     lines.append("## Output")
     lines.append("")

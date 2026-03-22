@@ -87,6 +87,12 @@ def build_pdf_report(payload: dict, output_path: str) -> Path:
     if payload.get("implementation_appendix"):
         story.append(PageBreak())
         story.extend(_implementation_appendix_section(payload.get("implementation_appendix", []), styles))
+    if payload.get("implementation_checklist"):
+        story.extend(_checklist_section(payload.get("implementation_checklist", []), styles))
+    if payload.get("progress_delta"):
+        story.extend(_progress_delta_section(payload.get("progress_delta", {}), styles))
+    if payload.get("benchmark"):
+        story.extend(_benchmark_section(payload.get("benchmark", []), styles))
     if payload.get("verification_notes"):
         if not payload.get("implementation_appendix"):
             story.append(PageBreak())
@@ -126,6 +132,7 @@ def _cover_section(payload: dict, styles: dict) -> list:
             [
                 ("BACKGROUND", (0, 0), (-1, -1), _score_fill(overall)),
                 ("BOX", (0, 0), (-1, -1), 0.6, LINE),
+                ("LINEABOVE", (0, 0), (-1, 0), 3.5, colors.HexColor(_score_hex(overall))),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
                 ("LEFTPADDING", (0, 0), (-1, -1), 10),
@@ -140,6 +147,8 @@ def _cover_section(payload: dict, styles: dict) -> list:
             [
                 ("BACKGROUND", (0, 0), (-1, -1), WHITE),
                 ("BOX", (0, 0), (-1, -1), 0.8, LINE),
+                ("LINEABOVE", (0, 0), (-1, 0), 3.5, TEAL),
+                ("LINEBELOW", (0, -1), (-1, -1), 0.7, LINE),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 12),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 12),
@@ -148,7 +157,7 @@ def _cover_section(payload: dict, styles: dict) -> list:
             ]
         )
     )
-    return [hero, Spacer(1, 6 * mm)]
+    return [KeepTogether(hero), Spacer(1, 6 * mm)]
 
 
 def _text_panel(title: str, body: str, styles: dict) -> list:
@@ -196,7 +205,15 @@ def _root_cause_panel(root_causes: list[str], styles: dict) -> list:
     return [panel, Spacer(1, 5 * mm)]
 
 
+def _coerce_opportunity(raw) -> dict:
+    if isinstance(raw, dict):
+        return raw
+    text = str(raw).strip()
+    return {"current_score": "", "target_score_30d": "", "ceiling_score": "", "primary_win": text}
+
+
 def _opportunity_section(opportunity_snapshot: dict, styles: dict) -> list:
+    opportunity_snapshot = _coerce_opportunity(opportunity_snapshot)
     cards = []
     items = [
         ("Current", str(opportunity_snapshot.get("current_score", "N/A"))),
@@ -242,7 +259,7 @@ def _module_section(module_scores: list[dict], styles: dict) -> list:
                 Paragraph(str(item.get("name", "")), styles["TableText"]),
                 Paragraph(str(item.get("score", "")), styles["TableTextCenter"]),
                 Paragraph(str(item.get("confidence", "")), styles["TableTextCenter"]),
-                Paragraph(str(item.get("driver", "")), styles["TableText"]),
+                Paragraph(str(item.get("driver") or item.get("primary_driver", "")), styles["TableText"]),
             ]
         )
     table = Table(rows, colWidths=[34 * mm, 18 * mm, 28 * mm, 90 * mm], repeatRows=1)
@@ -560,6 +577,114 @@ def _implementation_appendix_section(entries: list[dict], styles: dict) -> list:
     return elements
 
 
+def _checklist_section(items: list[dict], styles: dict) -> list:
+    elements = [Paragraph("Implementation Checklist", styles["SectionHeader"])]
+    rows = [["", "Action", "Owner", "Effort", "Status"]]
+    for item in items[:20]:
+        rows.append(
+            [
+                Paragraph("\u2610", styles["TableTextCenter"]),
+                Paragraph(str(item.get("action", "")), styles["TableText"]),
+                Paragraph(str(item.get("owner", "")), styles["TableTextCenter"]),
+                Paragraph(str(item.get("effort", "")), styles["TableTextCenter"]),
+                Paragraph(str(item.get("status", "")), styles["TableTextCenter"]),
+            ]
+        )
+    table = Table(rows, colWidths=[8 * mm, 72 * mm, 28 * mm, 24 * mm, 38 * mm], repeatRows=1)
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8.4),
+                ("GRID", (0, 0), (-1, -1), 0.35, LINE),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, PANEL]),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
+    elements.append(table)
+    elements.append(Spacer(1, 5 * mm))
+    return elements
+
+
+def _progress_delta_section(delta: dict, styles: dict) -> list:
+    elements = [Paragraph("Progress Since Last Audit", styles["SectionHeader"])]
+    prev = delta.get("previous_score", "N/A")
+    curr = delta.get("current_score", "N/A")
+    improvement = delta.get("improvement", "N/A")
+    score_row = Table(
+        [
+            [
+                Table([[Paragraph("Previous", styles["MiniLabel"])], [Paragraph(str(prev), styles["MiniValue"])]], colWidths=[42 * mm]),
+                Table([[Paragraph("Current", styles["MiniLabel"])], [Paragraph(str(curr), styles["MiniValue"])]], colWidths=[42 * mm]),
+                Table([[Paragraph("Change", styles["MiniLabel"])], [Paragraph(f"+{improvement}" if str(improvement).lstrip("-").isdigit() and int(str(improvement)) >= 0 else str(improvement), styles["MiniValue"])]], colWidths=[42 * mm]),
+            ]
+        ],
+        colWidths=[56 * mm, 56 * mm, 56 * mm],
+    )
+    score_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elements.append(score_row)
+    elements.append(Spacer(1, 4 * mm))
+    completed = delta.get("completed_items", [])
+    remaining = delta.get("remaining_items", [])
+    left_rows = [[Paragraph("Completed", styles["SectionTitle"])]] + [[Paragraph(f"\u2713 {item}", styles["BodyText"])] for item in completed[:10]]
+    right_rows = [[Paragraph("Remaining", styles["SectionTitle"])]] + [[Paragraph(f"\u25cb {item}", styles["BodyText"])] for item in remaining[:10]]
+    left = Table(left_rows, colWidths=[82 * mm])
+    right = Table(right_rows, colWidths=[82 * mm])
+    left.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), GREEN), ("BOX", (0, 0), (-1, -1), 0.5, LINE), ("LEFTPADDING", (0, 0), (-1, -1), 9), ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+    right.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), AMBER), ("BOX", (0, 0), (-1, -1), 0.5, LINE), ("LEFTPADDING", (0, 0), (-1, -1), 9), ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+    split = Table([[left, right]], colWidths=[85 * mm, 85 * mm])
+    split.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    elements.append(split)
+    elements.append(Spacer(1, 5 * mm))
+    return elements
+
+
+def _benchmark_section(benchmark: list[dict], styles: dict) -> list:
+    elements = [Paragraph("Competitor Benchmark", styles["SectionHeader"])]
+    headers = ["Site", "Overall", "Technical", "Content", "Schema", "Entity", "Platforms"]
+    rows = [headers]
+    for index, item in enumerate(benchmark[:6]):
+        row = [
+            Paragraph(str(item.get("site", "")), styles["TableText"]),
+            Paragraph(str(item.get("score", "")), styles["TableTextCenter"]),
+            Paragraph(str(item.get("technical", "")), styles["TableTextCenter"]),
+            Paragraph(str(item.get("content", "")), styles["TableTextCenter"]),
+            Paragraph(str(item.get("schema", "")), styles["TableTextCenter"]),
+            Paragraph(str(item.get("entity", "")), styles["TableTextCenter"]),
+            Paragraph(str(item.get("platforms", "")), styles["TableTextCenter"]),
+        ]
+        rows.append(row)
+    table = Table(rows, colWidths=[44 * mm, 18 * mm, 18 * mm, 18 * mm, 18 * mm, 18 * mm, 36 * mm], repeatRows=1)
+    style = [
+        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8.4),
+        ("GRID", (0, 0), (-1, -1), 0.35, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, PANEL]),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]
+    if benchmark:
+        style.append(("LINEABOVE", (0, 1), (-1, 1), 2.0, TEAL))
+        style.append(("LINEBELOW", (0, 1), (-1, 1), 2.0, TEAL))
+        style.append(("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"))
+    table.setStyle(TableStyle(style))
+    elements.append(table)
+    elements.append(Spacer(1, 5 * mm))
+    return elements
+
+
 def _final_remarks_section(payload: dict, styles: dict) -> list:
     final_remarks = payload.get("final_remarks") or _synthesize_final_remarks(payload)
     panel = Table(
@@ -645,6 +770,7 @@ def _from_audit_payload(payload: dict, path: Path) -> dict:
         "overall_score": payload.get("total_score", 0),
         "confidence": "Deterministic",
         "executive_summary": "Generated from the local GEOsphere audit payload.",
+        "opportunity_snapshot": {},
         "module_scores": module_scores,
         "platform_readiness": _platform_rows_from_summary(payload.get("summary", {})),
         "root_causes": payload.get("summary", {}).get("highlights", []),

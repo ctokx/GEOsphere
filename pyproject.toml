@@ -21,6 +21,10 @@ dev = [
 render = [
   "playwright>=1.56.0,<2.0.0"
 ]
+pdf = [
+  "reportlab>=4.0.0,<5.0.0",
+  "matplotlib>=3.8.0,<4.0.0"
+]
 
 [project.scripts]
 geosphere = "geosphere.cli:main"

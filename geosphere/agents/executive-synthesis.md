@@ -107,10 +107,22 @@ If a recommendation is low effort but low impact, say so. If a recommendation is
 Before synthesizing, confirm each specialist provided:
 
 - live_checks_performed
+- fetched_urls
 - verified_claims
 - at least one module-specific root cause
 
-If not, note the confidence reduction or require another pass.
+If any specialist is missing these, note the confidence reduction or require another pass.
+
+Include a **Specialist Verification Summary** table at the top of the final audit, before the executive summary:
+
+| Specialist | Live checks | URLs fetched | Confidence |
+|---|---|---|---|
+| Technical | N | [list] | high/medium/low |
+| Content | N | [list] | high/medium/low |
+| Schema | N | [list] | high/medium/low |
+| Entity | N | [list] | high/medium/low |
+
+This table is mandatory. It gives the website manager immediate transparency into how the audit was conducted.
 
 ## Tone
 

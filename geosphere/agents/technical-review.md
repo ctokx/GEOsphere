@@ -53,6 +53,7 @@ Return:
 - `confidence`
 - `root_causes`
 - `live_checks_performed`
+- `fetched_urls` (list of every URL actually fetched during this review)
 - `critical_findings`
 - `template_level_patterns`
 - `page_specific_findings`
